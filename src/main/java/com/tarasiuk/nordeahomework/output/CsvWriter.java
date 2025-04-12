@@ -106,9 +106,6 @@ public class CsvWriter implements AutoCloseable {
 
       finalWriter.write(DELIMITER + header);
       finalWriter.newLine();
-    } else {
-      finalWriter.write("Sentence No.");
-      finalWriter.newLine();
     }
   }
 
