@@ -19,23 +19,25 @@ public class Main {
   private static final String DEFAULT_OUTPUT_DIR = "src/test/resources/out";
 
   public static void main(String[] args) {
-    System.out.println("Starting streaming text processing...");
-
     List<Path> filePaths = createFilePaths(args);
     Path inputFile = filePaths.get(0);
     Path xmlOutputFile = filePaths.get(1);
     Path csvOutputFile = filePaths.get(2);
 
+    process(inputFile, xmlOutputFile, csvOutputFile);
+  }
+
+  public static void process(Path inputFile, Path xmlOutputFile, Path csvOutputFile) {
     try (Processor processor = new Processor(inputFile);
-        XmlWriter xmlWriter = new XmlWriter(xmlOutputFile);
-        CsvWriter csvWriter = new CsvWriter(csvOutputFile)) {
+         XmlWriter xmlWriter = new XmlWriter(xmlOutputFile);
+         CsvWriter csvWriter = new CsvWriter(csvOutputFile)) {
 
       xmlWriter.openDocument();
 
       List<Sentence> batch;
       int totalSentences = 0;
 
-      while (!(batch = processor.readNextSentences()).isEmpty()) {
+      while (!(batch = processor.readNextBatch()).isEmpty()) {
         totalSentences += batch.size();
         xmlWriter.writeSentences(batch);
         csvWriter.writeSentences(batch);

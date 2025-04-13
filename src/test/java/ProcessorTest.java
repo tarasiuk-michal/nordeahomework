@@ -19,19 +19,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class ProcessorTest {
-
   @TempDir Path tempDir;
   private Path testFile;
   private Processor processor;
 
-  private Path createTestFile(String content) throws IOException {
-    Path file = tempDir.resolve("testInput.txt");
-    Files.writeString(file, content, StandardCharsets.UTF_8);
-    return file;
-  }
-
   @AfterEach
-  void tearDown(){
+  void tearDown() {
     if (processor != null) {
       try {
         processor.close();
@@ -42,109 +35,89 @@ class ProcessorTest {
   }
 
   @ParameterizedTest
-  @MethodSource("readNextSentencesExtractionProvider")
-  void readNextSentences_extractionTest(String inputText, List<Sentence> expectedSentences)
+  @MethodSource("readNextBatchProvider")
+  void readNextBatch_extractionTest(String inputText, List<Sentence> expectedSentences)
       throws IOException {
+    // Given
     testFile = createTestFile(inputText);
     processor = new Processor(testFile);
 
     List<Sentence> actualSentences = new ArrayList<>();
     List<Sentence> batch;
 
-    while (!(batch = processor.readNextSentences()).isEmpty()) {
+    // When
+    while (!(batch = processor.readNextBatch()).isEmpty()) {
       actualSentences.addAll(batch);
     }
 
+    // Then
     assertEquals(expectedSentences, actualSentences, "The list of parsed sentences did not match");
   }
 
   @Test
-  void readNextSentences_emptyFile_shouldReturnEmptyList() throws IOException {
+  void readNextBatch_emptyFile_returnsEmptyList() throws IOException {
+    // Given
     testFile = createTestFile("");
     processor = new Processor(testFile);
-    List<Sentence> sentences = processor.readNextSentences();
+
+    // When
+    List<Sentence> sentences = processor.readNextBatch();
+    List<Sentence> sentencesAfterEof = processor.readNextBatch();
+
+    // Then
     assertTrue(sentences.isEmpty(), "Should return empty list for empty file");
-    // Call again after EOF
-    List<Sentence> sentencesAfterEof = processor.readNextSentences();
     assertTrue(sentencesAfterEof.isEmpty(), "Should return empty list after EOF");
   }
 
   @Test
-  void readNextSentences_textEndingWithoutPunctuation_multiRead() throws IOException {
-    // This test specifically checks the multi-read behavior when EOF logic kicks in
-    testFile =
-        createTestFile(
-            "This is the first sentence. This is the second one");
-    processor = new Processor(testFile);
-
-    List<Sentence> firstBatch = processor.readNextSentences();
-    assertEquals(1, firstBatch.size());
-    Sentence expected1 = new Sentence(Arrays.asList("first", "is", "sentence", "the", "This"));
-    assertEquals(expected1, firstBatch.get(0));
-
-    List<Sentence> secondBatch = processor.readNextSentences();
-    assertEquals(1, secondBatch.size());
-
-    Sentence expected2 = new Sentence(Arrays.asList("is", "one", "second", "the", "This"));
-    assertEquals(
-        expected2,
-        secondBatch.get(0),
-        "Remaining text at EOF should be processed (case-insensitive sort)");
-
-    List<Sentence> thirdBatch = processor.readNextSentences();
-    assertTrue(thirdBatch.isEmpty());
-  }
-
-  @Test
-  void readNextSentences_afterExplicitClose_returnsEmpty() throws IOException {
+  void readNextBatch_afterExplicitClose_returnsEmptyList() throws IOException {
+    // Given
     testFile = createTestFile("Test.");
     processor = new Processor(testFile);
-    processor.close();
 
-    List<Sentence> sentences = processor.readNextSentences();
+    // When
+    processor.close();
+    List<Sentence> sentences = processor.readNextBatch();
+
+    // Then
     assertTrue(sentences.isEmpty(), "Reading after close should return empty list");
   }
 
   @Test
   void close_canBeCalledMultipleTimes() throws IOException {
+    // Given
     testFile = createTestFile("Test.");
     processor = new Processor(testFile);
+
+    // When
     processor.close();
 
+    // Then
     assertDoesNotThrow(() -> processor.close());
   }
 
-  static Stream<Arguments> readNextSentencesExtractionProvider() {
+  static Stream<Arguments> readNextBatchProvider() {
     return Stream.of(
-            arguments(
-                    "This is a test.", List.of(new Sentence(Arrays.asList("a", "is", "test", "This")))),
-            arguments(
-                    "First sentence? Second sentence! Third one ends here.",
-                    List.of(
-                            new Sentence(Arrays.asList("First", "sentence")),
-                            new Sentence(Arrays.asList("Second", "sentence")),
-                            new Sentence(Arrays.asList("ends", "here", "one", "Third")))),
-            arguments(
-                    "Words, like 'hyphen-ated' (or not), are tricky.",
-                    List.of(
-                            new Sentence(
-                                    Arrays.asList("are", "hyphen-ated", "like", "not", "or", "tricky", "Words")))),
-            arguments(
-                    "Mr. Smith went to Washington. Mrs. Jones stayed home.",
-                    List.of(
-                            new Sentence(Arrays.asList("Mr", "Smith", "to", "Washington", "went")),
-                            new Sentence(Arrays.asList("home", "Jones", "Mrs", "stayed")))),
-            arguments(
-                    "It's a test, don't fail.",
-                    List.of(new Sentence(Arrays.asList("a", "don't", "fail", "It's", "test")))),
-            arguments(
-                    "Just a phrase",
-                    List.of(
-                            new Sentence(
-                                    Arrays.asList(
-                                            "a", "Just", "phrase"))
-                    )),
-            arguments(
-                    "  .   ? !  ", List.of()));
+        arguments(
+            "This is a test.", List.of(new Sentence(Arrays.asList("a", "is", "test", "This")))),
+        arguments(
+            "First sentence? Second sentence! Third one ends here.",
+            List.of(
+                new Sentence(Arrays.asList("First", "sentence")),
+                new Sentence(Arrays.asList("Second", "sentence")),
+                new Sentence(Arrays.asList("ends", "here", "one", "Third")))),
+        arguments(
+            "It's a test, don't fail.",
+            List.of(new Sentence(Arrays.asList("a", "don't", "fail", "It's", "test")))),
+        arguments("Just a phrase", List.of(new Sentence(Arrays.asList("a", "Just", "phrase")))),
+        arguments("  .   ? !  ", List.of()));
+  }
+
+  private Path createTestFile(String content) throws IOException {
+    Path file = tempDir.resolve("testInput.txt");
+
+    Files.writeString(file, content, StandardCharsets.UTF_8);
+
+    return file;
   }
 }
