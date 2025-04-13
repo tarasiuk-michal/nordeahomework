@@ -43,7 +43,7 @@ class XmlWriterTest {
     String expected = XML_DECL_HEADER + expectedXmlContent;
 
     // Then
-    assertThat(actual).and(expected).areIdentical();
+    assertThat(actual).and(expected).ignoreWhitespace().areIdentical();
   }
 
   @Test

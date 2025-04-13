@@ -35,8 +35,8 @@ class ProcessorTest {
   }
 
   @ParameterizedTest
-  @MethodSource("readNextBatchProvider")
-  void readNextBatch_extractionTest(String inputText, List<Sentence> expectedSentences)
+  @MethodSource("readNextSentencesProvider")
+  void readNextSentences_extractionTest(String inputText, List<Sentence> expectedSentences)
       throws IOException {
     // Given
     testFile = createTestFile(inputText);
@@ -46,7 +46,7 @@ class ProcessorTest {
     List<Sentence> batch;
 
     // When
-    while (!(batch = processor.readNextBatch()).isEmpty()) {
+    while (!(batch = processor.readNextSentences()).isEmpty()) {
       actualSentences.addAll(batch);
     }
 
@@ -55,32 +55,18 @@ class ProcessorTest {
   }
 
   @Test
-  void readNextBatch_emptyFile_returnsEmptyList() throws IOException {
+  void readNextSentences_emptyFile_returnsEmptyList() throws IOException {
     // Given
     testFile = createTestFile("");
     processor = new Processor(testFile);
 
     // When
-    List<Sentence> sentences = processor.readNextBatch();
-    List<Sentence> sentencesAfterEof = processor.readNextBatch();
+    List<Sentence> sentences = processor.readNextSentences();
+    List<Sentence> sentencesAfterEof = processor.readNextSentences();
 
     // Then
     assertTrue(sentences.isEmpty(), "Should return empty list for empty file");
     assertTrue(sentencesAfterEof.isEmpty(), "Should return empty list after EOF");
-  }
-
-  @Test
-  void readNextBatch_afterExplicitClose_returnsEmptyList() throws IOException {
-    // Given
-    testFile = createTestFile("Test.");
-    processor = new Processor(testFile);
-
-    // When
-    processor.close();
-    List<Sentence> sentences = processor.readNextBatch();
-
-    // Then
-    assertTrue(sentences.isEmpty(), "Reading after close should return empty list");
   }
 
   @Test
@@ -96,7 +82,7 @@ class ProcessorTest {
     assertDoesNotThrow(() -> processor.close());
   }
 
-  static Stream<Arguments> readNextBatchProvider() {
+  static Stream<Arguments> readNextSentencesProvider() {
     return Stream.of(
         arguments(
             "This is a test.", List.of(new Sentence(Arrays.asList("a", "is", "test", "This")))),

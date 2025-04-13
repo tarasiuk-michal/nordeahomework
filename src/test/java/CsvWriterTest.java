@@ -1,4 +1,5 @@
 import static com.tarasiuk.nordeahomework.output.CsvWriter.DELIMITER;
+import static com.tarasiuk.nordeahomework.output.CsvWriter.NEWLINE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -61,7 +62,7 @@ class CsvWriterTest {
             arguments( // Single sentence
                     "single_sentence.csv",
                     List.of(new Sentence(Arrays.asList("Hello", "world"))),
-                    new StringJoiner(System.lineSeparator())
+                    new StringJoiner(NEWLINE)
                             .add(new StringJoiner(DELIMITER).add("").add("Word 1").add("Word 2").toString())
                             .add(
                                     new StringJoiner(DELIMITER)
@@ -77,7 +78,7 @@ class CsvWriterTest {
                             new Sentence(List.of("Short")),
                             new Sentence(Arrays.asList("This", "is", "longer")),
                             new Sentence(Arrays.asList("Medium", "one"))),
-                    new StringJoiner(System.lineSeparator())
+                    new StringJoiner(NEWLINE)
                             .add(
                                     new StringJoiner(DELIMITER)
                                             .add("")
@@ -105,7 +106,7 @@ class CsvWriterTest {
                     "escaped_sentence.csv",
                     List.of(
                             new Sentence(Arrays.asList("Comma,here", "Quote\"there", "Both,\"&", "Normal"))),
-                    new StringJoiner(System.lineSeparator())
+                    new StringJoiner(NEWLINE)
                             .add(
                                     new StringJoiner(DELIMITER)
                                             .add("")

@@ -19,12 +19,22 @@ public class Main {
   private static final String DEFAULT_OUTPUT_DIR = "src/test/resources/out";
 
   public static void main(String[] args) {
-    List<Path> filePaths = createFilePaths(args);
-    Path inputFile = filePaths.get(0);
-    Path xmlOutputFile = filePaths.get(1);
-    Path csvOutputFile = filePaths.get(2);
+    try { // Add try-catch block
+      List<Path> filePaths = createFilePaths(args);
 
-    process(inputFile, xmlOutputFile, csvOutputFile);
+      Path inputFile = filePaths.get(0);
+      Path xmlOutputFile = filePaths.get(1);
+      Path csvOutputFile = filePaths.get(2);
+
+      process(inputFile, xmlOutputFile, csvOutputFile);
+    } catch (IOException e) {
+      System.err.println("Initialization failed: " + e.getMessage());
+      System.exit(1);
+    } catch (Exception e) {
+      System.err.println("An unexpected error occurred during processing: " + e.getMessage());
+      e.printStackTrace();
+      System.exit(1);
+    }
   }
 
   public static void process(Path inputFile, Path xmlOutputFile, Path csvOutputFile) {
@@ -37,7 +47,7 @@ public class Main {
       List<Sentence> batch;
       int totalSentences = 0;
 
-      while (!(batch = processor.readNextBatch()).isEmpty()) {
+      while (!(batch = processor.readNextSentences()).isEmpty()) {
         totalSentences += batch.size();
         xmlWriter.writeSentences(batch);
         csvWriter.writeSentences(batch);
@@ -59,7 +69,7 @@ public class Main {
     }
   }
 
-  private static List<Path> createFilePaths(String[] args) {
+  private static List<Path> createFilePaths(String[] args) throws IOException {
     Path inputFile;
     Path xmlOutputFile;
     Path csvOutputFile;
@@ -83,9 +93,8 @@ public class Main {
       xmlOutputFile = outputDir.resolve(outputName + ".xml");
       csvOutputFile = outputDir.resolve(outputName + ".csv");
 
-    } catch (InvalidPathException | IOException e) {
-      System.err.println("Error setting up file paths: " + e.getMessage());
-      return null;
+    } catch (InvalidPathException e) {
+      throw new IOException("Error setting up file paths: " + e.getMessage(), e);
     }
 
     System.out.println("Input file: " + inputFile.toAbsolutePath());

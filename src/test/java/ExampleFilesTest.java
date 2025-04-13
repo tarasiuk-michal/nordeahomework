@@ -34,7 +34,7 @@ class ExampleFilesTest {
   }
 
   @Test
-  void processSmallFile_generatesCorrectOutput() throws IOException, XMLStreamException {
+  void processSmallFile_generatesCorrectOutput() throws IOException {
     // Given
     Path actualCsvPath = actualOutputDir.resolve(CSV_OUTPUT_FILE);
     Path actualXmlPath = actualOutputDir.resolve(XML_OUTPUT_FILE);
@@ -44,10 +44,8 @@ class ExampleFilesTest {
 
     // Then
     assertTrue(Files.exists(actualCsvPath), "Actual CSV output file was not created.");
-    String expectedCsvContent =
-        Files.readString(expectedCsvPath, StandardCharsets.UTF_8).replace("\r\n", "\n");
-    String actualCsvContent =
-        Files.readString(actualCsvPath, StandardCharsets.UTF_8).replace("\r\n", "\n");
+    String expectedCsvContent = Files.readString(expectedCsvPath, StandardCharsets.UTF_8);
+    String actualCsvContent = Files.readString(actualCsvPath, StandardCharsets.UTF_8);
     assertEquals(expectedCsvContent, actualCsvContent, "CSV file content does not match expected.");
 
     assertTrue(Files.exists(actualXmlPath), "Actual XML output file was not created.");
@@ -56,9 +54,5 @@ class ExampleFilesTest {
         .ignoreWhitespace()
         .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byNameAndText))
         .areIdentical();
-
-    System.out.println("Integration test passed for: " + INPUT_FILE);
-    System.out.println("Actual CSV output: " + actualCsvPath);
-    System.out.println("Actual XML output: " + actualXmlPath);
   }
 }

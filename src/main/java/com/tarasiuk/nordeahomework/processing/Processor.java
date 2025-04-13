@@ -18,17 +18,16 @@ import opennlp.tools.util.Span;
 
 public class Processor implements AutoCloseable {
 
-  public static final int BUFFER_SIZE = 10240;
-  public static final String OPENNLP_EN_TOKEN_MODEL_PATH =
+  private static final int BUFFER_SIZE = 10240;
+  private static final String OPENNLP_EN_TOKEN_MODEL_PATH =
       "/opennlp-en-ud-ewt-tokens-1.2-2.5.0.bin";
-  public static final String OPENNLP_EN_SENTENCE_MODEL_PATH =
+  private static final String OPENNLP_EN_SENTENCE_MODEL_PATH =
       "/opennlp-en-ud-ewt-sentence-1.2-2.5.0.bin";
-  public static final Comparator<String> COMPARATOR = caseInsensitiveWithLowercaseFirst();
-  public static final String EN_TOKEN_MODEL_PATH = "/models/en-token.bin";
-  public static final String EN_SENTENCE_MODEL_PATH = "/models/en-sent.bin";
+  private static final Comparator<String> COMPARATOR = caseInsensitiveWithLowercaseFirst();
   private static final Set<String> ABBREVIATIONS_TO_PRESERVE = Set.of("Mr.", "Mrs.", "Ms.");
   private static final Pattern PUNCTUATION_PATTERN =
       Pattern.compile("^[.,!?:;()\"']+|[.,!?:;()\"']+$|^-$");
+
   private final BufferedReader reader;
   private final char[] charBuffer;
   private final StringBuilder buffer = new StringBuilder();
@@ -37,7 +36,6 @@ public class Processor implements AutoCloseable {
   private boolean eofReached = false;
 
   public Processor(Path inputFile) throws IOException {
-
     try (InputStream sentModelIn =
             Objects.requireNonNull(
                 getClass().getResourceAsStream(OPENNLP_EN_SENTENCE_MODEL_PATH),
@@ -82,12 +80,7 @@ public class Processor implements AutoCloseable {
     System.out.println("Processor closed.");
   }
 
-  public List<Sentence> readNextBatch() throws IOException {
-    try {
-      reader.ready();
-    } catch (IOException e) {
-      return Collections.emptyList();
-    }
+  public List<Sentence> readNextSentences() throws IOException {
 
     if (eofReached && buffer.isEmpty()) {
       return Collections.emptyList();
@@ -112,7 +105,6 @@ public class Processor implements AutoCloseable {
       if (!sentence.isEmpty()) {
         List<String> words = extractWords(sentence);
         if (!words.isEmpty()) {
-          words.sort(COMPARATOR);
           sentencesFound.add(new Sentence(words));
         }
       }
@@ -126,7 +118,6 @@ public class Processor implements AutoCloseable {
       if (!remainingText.isEmpty()) {
         List<String> words = extractWords(remainingText);
         if (!words.isEmpty()) {
-          words.sort(COMPARATOR);
           sentencesFound.add(new Sentence(words));
         }
       }
@@ -148,6 +139,7 @@ public class Processor implements AutoCloseable {
               }
             })
         .filter(token -> !token.isEmpty())
+        .sorted(COMPARATOR)
         .collect(Collectors.toList());
   }
 }

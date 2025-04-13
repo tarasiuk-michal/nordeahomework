@@ -14,11 +14,12 @@ import java.util.stream.Collectors;
 public class CsvWriter implements AutoCloseable {
 
   public static final String DELIMITER = ", ";
+  public static final String NEWLINE = System.lineSeparator();
   private final Path finalOutputFile;
   private final Path tempFile;
   private final BufferedWriter tempWriter;
   private int maxWords = 0;
-  private int sentenceCount = 0; // Track total sentences written to temp
+  private int sentenceCount = 0;
 
   public CsvWriter(Path outputFile) throws IOException {
     this.finalOutputFile = outputFile;
@@ -40,7 +41,7 @@ public class CsvWriter implements AutoCloseable {
 
       tempWriter.write(
           words.stream().map(this::escapeCsvField).collect(Collectors.joining(DELIMITER)));
-      tempWriter.newLine();
+      tempWriter.write(NEWLINE);
       sentenceCount++;
     }
     tempWriter.flush();
@@ -78,7 +79,7 @@ public class CsvWriter implements AutoCloseable {
         finalWriter.write(String.valueOf(currentSentenceNum++));
         finalWriter.write(DELIMITER);
         finalWriter.write(line);
-        finalWriter.newLine();
+        finalWriter.write(NEWLINE);
       }
 
     } finally {
@@ -96,7 +97,6 @@ public class CsvWriter implements AutoCloseable {
   }
 
   private void writeFinalHeader(BufferedWriter finalWriter) throws IOException {
-    // Write final header
     if (maxWords > 0) {
       StringJoiner header = new StringJoiner(DELIMITER);
 
@@ -106,7 +106,7 @@ public class CsvWriter implements AutoCloseable {
       }
 
       finalWriter.write(DELIMITER + header);
-      finalWriter.newLine();
+      finalWriter.write(NEWLINE);
     }
   }
 
