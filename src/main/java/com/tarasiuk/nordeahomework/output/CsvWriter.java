@@ -10,8 +10,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CsvWriter implements AutoCloseable {
+  private static final Logger logger = LoggerFactory.getLogger(CsvWriter.class);
 
   public static final String DELIMITER = ", ";
   public static final String NEWLINE = System.lineSeparator();
@@ -25,7 +28,7 @@ public class CsvWriter implements AutoCloseable {
     this.finalOutputFile = outputFile;
     this.tempFile = Files.createTempFile("csv_writer_temp_", ".tmp");
     this.tempWriter = Files.newBufferedWriter(tempFile, StandardCharsets.UTF_8);
-    System.out.println("Writing sentence data to temporary file: " + tempFile.toAbsolutePath());
+    logger.info("Writing sentence data to temporary file: {}", tempFile.toAbsolutePath());
   }
 
   public void writeSentences(List<Sentence> sentences) throws IOException {
@@ -49,23 +52,33 @@ public class CsvWriter implements AutoCloseable {
 
   @Override
   public void close() throws IOException {
+    logger.debug("Closing CsvWriter.");
     if (tempWriter != null) {
-      tempWriter.close();
+      try {
+        tempWriter.close();
+      } catch (IOException e) {
+        logger.warn("Error closing temporary writer: {}", e.getMessage(), e);
+      }
     }
 
-    System.out.println(
-        "Temporary file writing complete. Max words found: "
-            + maxWords
-            + ". Sentences: "
-            + sentenceCount);
+    logger.info(
+        "Temporary file writing complete. Max words found: {}. Sentences: {}",
+        maxWords,
+        sentenceCount);
 
-    writeFinalFile();
+    try {
+      writeFinalFile();
+    } catch (IOException e) {
+      logger.error("Failed to write final CSV file: {}", e.getMessage(), e);
+      deleteTempFile();
+      throw e;
+    }
 
-    System.out.println("CsvWriter closed.");
+    logger.info("CsvWriter closed."); // Confirmation message
   }
 
   private void writeFinalFile() throws IOException {
-    System.out.println("Writing final CSV file: " + finalOutputFile.toAbsolutePath());
+    logger.info("Writing final CSV file: {}", finalOutputFile.toAbsolutePath());
     try (BufferedReader tempReader = Files.newBufferedReader(tempFile, StandardCharsets.UTF_8);
         BufferedWriter finalWriter =
             Files.newBufferedWriter(finalOutputFile, StandardCharsets.UTF_8)) {
@@ -81,6 +94,7 @@ public class CsvWriter implements AutoCloseable {
         finalWriter.write(line);
         finalWriter.write(NEWLINE);
       }
+      logger.debug("Finished writing content to final CSV file.");
 
     } finally {
       deleteTempFile();
@@ -89,10 +103,13 @@ public class CsvWriter implements AutoCloseable {
 
   private void deleteTempFile() {
     try {
-      Files.delete(tempFile);
+      if (Files.exists(tempFile)) {
+        Files.delete(tempFile);
+        logger.debug("Temporary file deleted: {}", tempFile.toAbsolutePath());
+      }
     } catch (IOException e) {
-      System.err.println(
-          "Error deleting temporary file: " + tempFile.toAbsolutePath() + " - " + e.getMessage());
+      logger.error(
+          "Error deleting temporary file: {} - {}", tempFile.toAbsolutePath(), e.getMessage(), e);
     }
   }
 

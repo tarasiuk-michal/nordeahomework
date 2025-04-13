@@ -15,8 +15,11 @@ import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
 import opennlp.tools.util.Span;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Processor implements AutoCloseable {
+  private static final Logger logger = LoggerFactory.getLogger(Processor.class);
 
   private static final int BUFFER_SIZE = 10240;
   private static final String OPENNLP_EN_TOKEN_MODEL_PATH =
@@ -36,19 +39,22 @@ public class Processor implements AutoCloseable {
   private boolean eofReached = false;
 
   public Processor(Path inputFile) throws IOException {
+    logger.debug("Initializing Processor for file: {}", inputFile);
     try (InputStream sentModelIn =
-            Objects.requireNonNull(
-                getClass().getResourceAsStream(OPENNLP_EN_SENTENCE_MODEL_PATH),
-                "Sentence model not found on classpath at: " + OPENNLP_EN_SENTENCE_MODEL_PATH);
-        InputStream tokenModelIn =
-            Objects.requireNonNull(
-                getClass().getResourceAsStream(OPENNLP_EN_TOKEN_MODEL_PATH),
-                "Tokenizer model not found on classpath at: " + OPENNLP_EN_TOKEN_MODEL_PATH)) {
+                 Objects.requireNonNull(
+                         getClass().getResourceAsStream(OPENNLP_EN_SENTENCE_MODEL_PATH),
+                         "Sentence model not found on classpath at: " + OPENNLP_EN_SENTENCE_MODEL_PATH);
+         InputStream tokenModelIn =
+                 Objects.requireNonNull(
+                         getClass().getResourceAsStream(OPENNLP_EN_TOKEN_MODEL_PATH),
+                         "Tokenizer model not found on classpath at: " + OPENNLP_EN_TOKEN_MODEL_PATH)) {
 
       this.sdetector = new SentenceDetectorME(new SentenceModel(sentModelIn));
       this.tokenizer = new TokenizerME(new TokenizerModel(tokenModelIn));
+      logger.debug("OpenNLP models loaded successfully.");
+
     } catch (IOException | NullPointerException e) {
-      System.err.println("Error loading OpenNLP models from classpath: " + e.getMessage());
+      logger.error("Error loading OpenNLP models from classpath: {}", e.getMessage(), e);
       throw new IOException("Failed to initialize OpenNLP Processor from classpath models", e);
     }
 
@@ -73,11 +79,16 @@ public class Processor implements AutoCloseable {
 
   @Override
   public void close() throws IOException {
+    logger.debug("Closing Processor.");
     if (reader != null) {
-      reader.close();
+      try {
+        reader.close();
+      } catch (IOException e) {
+        logger.warn("Error closing reader: {}", e.getMessage(), e);
+      }
     }
     buffer.setLength(0);
-    System.out.println("Processor closed.");
+    logger.info("Processor closed.");
   }
 
   public List<Sentence> readNextSentences() throws IOException {
