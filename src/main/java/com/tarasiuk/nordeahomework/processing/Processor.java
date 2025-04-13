@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 public class Processor implements AutoCloseable {
 
   public static final int BUFFER_SIZE = 1024;
+  public static final Comparator<String> COMPARATOR = String::compareToIgnoreCase;
   private final BufferedReader reader;
   private final char[] charBuffer;
   private final StringBuilder buffer = new StringBuilder();
@@ -45,6 +47,12 @@ public class Processor implements AutoCloseable {
   }
 
   public List<Sentence> readNextSentences() throws IOException {
+    try{
+      reader.ready();
+    } catch (IOException e) {
+      return Collections.emptyList();
+    }
+
     if (eofReached && buffer.isEmpty()) {
       return Collections.emptyList();
     }
@@ -74,7 +82,7 @@ public class Processor implements AutoCloseable {
 
       if (!sentenceText.isEmpty()) {
         List<String> words = extractWords(sentenceText);
-        words.sort(String::compareTo);
+        words.sort(COMPARATOR);
         if (!words.isEmpty()) {
           sentencesFound.add(new Sentence(words));
         }
@@ -88,16 +96,12 @@ public class Processor implements AutoCloseable {
       String remainingText = buffer.toString().trim();
       if (!remainingText.isEmpty()) {
         List<String> words = extractWords(remainingText);
-        words.sort(String::compareToIgnoreCase);
+        words.sort(COMPARATOR);
         if (!words.isEmpty()) {
           sentencesFound.add(new Sentence(words));
         }
       }
       buffer.setLength(0);
-    }
-
-    if (eofReached && buffer.isEmpty()) {
-      close();
     }
 
     return sentencesFound;
