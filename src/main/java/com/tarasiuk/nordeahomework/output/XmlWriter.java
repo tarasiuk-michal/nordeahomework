@@ -63,7 +63,7 @@ public class XmlWriter implements AutoCloseable {
   public void close() throws IOException, XMLStreamException {
     try {
       if (documentStarted) {
-        xmlWriter.writeEndElement(); // </text>
+        xmlWriter.writeEndElement();
         xmlWriter.writeCharacters("\n");
         xmlWriter.writeEndDocument();
       }

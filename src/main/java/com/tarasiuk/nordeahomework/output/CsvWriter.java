@@ -38,7 +38,8 @@ public class CsvWriter implements AutoCloseable {
         this.maxWords = words.size();
       }
 
-      tempWriter.write(words.stream().map(this::escapeCsvField).collect(Collectors.joining(DELIMITER)));
+      tempWriter.write(
+          words.stream().map(this::escapeCsvField).collect(Collectors.joining(DELIMITER)));
       tempWriter.newLine();
       sentenceCount++;
     }

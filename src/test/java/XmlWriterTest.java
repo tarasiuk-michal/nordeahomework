@@ -29,40 +29,49 @@ class XmlWriterTest {
   void writeSentences_producesCorrectXml(
       String outputFileName, List<Sentence> sentences, String expectedXmlContent)
       throws IOException, XMLStreamException {
+    // Given
     Path outputFile = tempDir.resolve(outputFileName);
 
+    // When
     try (XmlWriter writer = new XmlWriter(outputFile)) {
       writer.openDocument();
       writer.writeSentences(sentences);
     }
-
     assertTrue(Files.exists(outputFile), "Output file should exist");
-    String actualXmlContent = Files.readString(outputFile, StandardCharsets.UTF_8);
+    String actual = Files.readString(outputFile, StandardCharsets.UTF_8);
 
-    String expectedWithDecl = XML_DECL_HEADER + expectedXmlContent;
+    String expected = XML_DECL_HEADER + expectedXmlContent;
 
-    assertThat(actualXmlContent).and(expectedWithDecl).areIdentical();
+    // Then
+    assertThat(actual).and(expected).areIdentical();
   }
 
   @Test
   void writeSentences_handlesNullListGracefully() throws IOException, XMLStreamException {
+    // Given
     Path outputFile = tempDir.resolve("null_list.xml");
-    String expectedXmlContent = XML_DECL_HEADER + "<text>\n</text>\n";
 
+    // When
     try (XmlWriter writer = new XmlWriter(outputFile)) {
       writer.openDocument();
       writer.writeSentences(null); // Pass null list
     }
-
     assertTrue(Files.exists(outputFile), "Output file should exist");
-    String actualXmlContent = Files.readString(outputFile, StandardCharsets.UTF_8);
-    assertThat(actualXmlContent).and(expectedXmlContent).ignoreWhitespace().areIdentical();
+    String actual = Files.readString(outputFile, StandardCharsets.UTF_8);
+
+    String expected = XML_DECL_HEADER + "<text>\n</text>\n";
+
+    // Then
+    assertThat(actual).and(expected).ignoreWhitespace().areIdentical();
   }
 
   @Test
   void writeSentences_withoutOpenDocument_throwsException() throws IOException, XMLStreamException {
+    // Given
     Path outputFile = tempDir.resolve("no_open.xml");
+    // When
     try (XmlWriter writer = new XmlWriter(outputFile)) {
+      // Then
       assertThrows(
           IllegalStateException.class,
           () -> writer.writeSentences(List.of(new Sentence(List.of("test")))),
@@ -72,40 +81,39 @@ class XmlWriterTest {
 
   static Stream<Arguments> xmlWritingProvider() {
     return Stream.of(
-        arguments(
-            "single_sentence.xml",
-            List.of(new Sentence(Arrays.asList("Hello", "world"))),
-            """
-                        <text>
-                        <sentence><word>Hello</word><word>world</word></sentence>
-                        </text>
-                        """),
-        arguments(
-            "multi_sentence.xml",
-            List.of(
-                new Sentence(Arrays.asList("First", "one")), new Sentence(Arrays.asList("Second"))),
-            """
-                        <text>
-                        <sentence><word>First</word><word>one</word></sentence>
-                        <sentence><word>Second</word></sentence>
-                        </text>
-                        """),
-        arguments(
-            "escaped_sentence.xml",
-            List.of(
-                new Sentence(
-                    Arrays.asList("LessThan<", "GreaterThan>", "Ampersand&", "Apos'", "Quote\""))),
-            """
-                        <text>
-                        <sentence><word>LessThan&lt;</word><word>GreaterThan&gt;</word><word>Ampersand&amp;</word><word>Apos'</word><word>Quote&quot;</word></sentence>
-                        </text>
-                        """),
-        arguments(
-            "empty_list.xml",
-            Collections.emptyList(),
-            """
-                        <text>
-                        </text>
-                        """));
+            arguments(
+                    "single_sentence.xml",
+                    List.of(new Sentence(Arrays.asList("Hello", "world"))),
+                    """
+                                        <text>
+                                        <sentence><word>Hello</word><word>world</word></sentence>
+                                        </text>
+                                        """),
+            arguments(
+                    "multi_sentence.xml",
+                    List.of(new Sentence(Arrays.asList("First", "one")), new Sentence(List.of("Second"))),
+                    """
+                                        <text>
+                                        <sentence><word>First</word><word>one</word></sentence>
+                                        <sentence><word>Second</word></sentence>
+                                        </text>
+                                        """),
+            arguments(
+                    "escaped_sentence.xml",
+                    List.of(
+                            new Sentence(
+                                    Arrays.asList("LessThan<", "GreaterThan>", "Ampersand&", "Apos'", "Quote\""))),
+                    """
+                                        <text>
+                                        <sentence><word>LessThan&lt;</word><word>GreaterThan&gt;</word><word>Ampersand&amp;</word><word>Apos'</word><word>Quote&quot;</word></sentence>
+                                        </text>
+                                        """),
+            arguments(
+                    "empty_list.xml",
+                    Collections.emptyList(),
+                    """
+                                        <text>
+                                        </text>
+                                        """));
   }
 }
