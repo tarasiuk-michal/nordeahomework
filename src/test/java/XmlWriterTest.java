@@ -24,6 +24,44 @@ class XmlWriterTest {
   public static final String XML_DECL_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
   @TempDir Path tempDir;
 
+  static Stream<Arguments> xmlWritingProvider() {
+    return Stream.of(
+        arguments(
+            "single_sentence.xml",
+            List.of(new Sentence(Arrays.asList("Hello", "world"))),
+            """
+                                        <text>
+                                        <sentence><word>Hello</word><word>world</word></sentence>
+                                        </text>
+                                        """),
+        arguments(
+            "multi_sentence.xml",
+            List.of(new Sentence(Arrays.asList("First", "one")), new Sentence(List.of("Second"))),
+            """
+                                        <text>
+                                        <sentence><word>First</word><word>one</word></sentence>
+                                        <sentence><word>Second</word></sentence>
+                                        </text>
+                                        """),
+        arguments(
+            "escaped_sentence.xml",
+            List.of(
+                new Sentence(
+                    Arrays.asList("LessThan<", "GreaterThan>", "Ampersand&", "Apos'", "Quote\""))),
+            """
+                                        <text>
+                                        <sentence><word>LessThan&lt;</word><word>GreaterThan&gt;</word><word>Ampersand&amp;</word><word>Apos'</word><word>Quote&quot;</word></sentence>
+                                        </text>
+                                        """),
+        arguments(
+            "empty_list.xml",
+            Collections.emptyList(),
+            """
+                                        <text>
+                                        </text>
+                                        """));
+  }
+
   @ParameterizedTest(name = "[{index}] Writing {0}")
   @MethodSource("xmlWritingProvider")
   void writeSentences_producesCorrectXml(
@@ -77,43 +115,5 @@ class XmlWriterTest {
           () -> writer.writeSentences(List.of(new Sentence(List.of("test")))),
           "Should throw IllegalStateException if document is not opened");
     }
-  }
-
-  static Stream<Arguments> xmlWritingProvider() {
-    return Stream.of(
-            arguments(
-                    "single_sentence.xml",
-                    List.of(new Sentence(Arrays.asList("Hello", "world"))),
-                    """
-                                        <text>
-                                        <sentence><word>Hello</word><word>world</word></sentence>
-                                        </text>
-                                        """),
-            arguments(
-                    "multi_sentence.xml",
-                    List.of(new Sentence(Arrays.asList("First", "one")), new Sentence(List.of("Second"))),
-                    """
-                                        <text>
-                                        <sentence><word>First</word><word>one</word></sentence>
-                                        <sentence><word>Second</word></sentence>
-                                        </text>
-                                        """),
-            arguments(
-                    "escaped_sentence.xml",
-                    List.of(
-                            new Sentence(
-                                    Arrays.asList("LessThan<", "GreaterThan>", "Ampersand&", "Apos'", "Quote\""))),
-                    """
-                                        <text>
-                                        <sentence><word>LessThan&lt;</word><word>GreaterThan&gt;</word><word>Ampersand&amp;</word><word>Apos'</word><word>Quote&quot;</word></sentence>
-                                        </text>
-                                        """),
-            arguments(
-                    "empty_list.xml",
-                    Collections.emptyList(),
-                    """
-                                        <text>
-                                        </text>
-                                        """));
   }
 }

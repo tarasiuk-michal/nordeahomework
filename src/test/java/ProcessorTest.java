@@ -23,6 +23,23 @@ class ProcessorTest {
   private Path testFile;
   private Processor processor;
 
+  static Stream<Arguments> readNextSentencesProvider() {
+    return Stream.of(
+        arguments(
+            "This is a test.", List.of(new Sentence(Arrays.asList("a", "is", "test", "This")))),
+        arguments(
+            "First sentence? Second sentence! Third one ends here.",
+            List.of(
+                new Sentence(Arrays.asList("First", "sentence")),
+                new Sentence(Arrays.asList("Second", "sentence")),
+                new Sentence(Arrays.asList("ends", "here", "one", "Third")))),
+        arguments(
+            "It's a test, don't fail.",
+            List.of(new Sentence(Arrays.asList("a", "don't", "fail", "It's", "test")))),
+        arguments("Just a phrase", List.of(new Sentence(Arrays.asList("a", "Just", "phrase")))),
+        arguments("  .   ? !  ", List.of()));
+  }
+
   @AfterEach
   void tearDown() {
     if (processor != null) {
@@ -80,23 +97,6 @@ class ProcessorTest {
 
     // Then
     assertDoesNotThrow(() -> processor.close());
-  }
-
-  static Stream<Arguments> readNextSentencesProvider() {
-    return Stream.of(
-        arguments(
-            "This is a test.", List.of(new Sentence(Arrays.asList("a", "is", "test", "This")))),
-        arguments(
-            "First sentence? Second sentence! Third one ends here.",
-            List.of(
-                new Sentence(Arrays.asList("First", "sentence")),
-                new Sentence(Arrays.asList("Second", "sentence")),
-                new Sentence(Arrays.asList("ends", "here", "one", "Third")))),
-        arguments(
-            "It's a test, don't fail.",
-            List.of(new Sentence(Arrays.asList("a", "don't", "fail", "It's", "test")))),
-        arguments("Just a phrase", List.of(new Sentence(Arrays.asList("a", "Just", "phrase")))),
-        arguments("  .   ? !  ", List.of()));
   }
 
   private Path createTestFile(String content) throws IOException {

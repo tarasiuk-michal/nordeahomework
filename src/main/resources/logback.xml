@@ -6,8 +6,12 @@
         </encoder>
     </appender>
 
+    <logger name="com.tarasiuk.nordeahomework" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
     <root level="INFO">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="STDOUT"/>
     </root>
 
 </configuration>
