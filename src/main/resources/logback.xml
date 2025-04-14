@@ -6,7 +6,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.tarasiuk.nordeahomework" level="INFO" additivity="false">
+    <logger name="com.tarasiuk.nordeahomework" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
 
